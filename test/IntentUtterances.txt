@@ -1,0 +1,7 @@
+GetHoroscope what is the horoscope for {pisces|Sign}
+GetHoroscope what will the horoscope for {leo|Sign} be {next tuesday|Date}
+GetHoroscope get me my horoscope
+GetHoroscope {gemini|Sign}
+
+GetLuckyNumbers what are my lucky numbers
+GetLuckyNumbers tell me my lucky numbers
