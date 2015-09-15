@@ -1,6 +1,8 @@
 # Intent Utterance File Parser
 
-> Parse an intent utterance file, similar to the [Alexa Skills Kit Sample Utterance file](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface).
+> Parse an intent utterance file, like the [Alexa Skills Kit Sample Utterance file](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface).
+
+The parser extracts unique words and slots from each intent.
 
 # Install
 
@@ -22,7 +24,7 @@ GetLuckyNumbers what are my lucky numbers
 GetLuckyNumbers tell me my lucky numbers
 ```
 
-Parsing example
+File parsing
 
 ```javascript
 const fs = require('fs');
