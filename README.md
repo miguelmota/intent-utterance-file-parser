@@ -134,6 +134,12 @@ IntentUtteranceParser(fileStream, function(error, response) {
 });
 ```
 
+# Test
+
+```bash
+npm test
+```
+
 # License
 
 MIT
