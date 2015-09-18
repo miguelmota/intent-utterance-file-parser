@@ -19,7 +19,7 @@ function IntentUtteranceParser(fileStream, callback) {
     const intentsHash = {};
     const getWords = IntentUtteranceParser._getWords;
     const getSlots = IntentUtteranceParser._getSlots;
-    const getUnique = IntentUtteranceParser._getUnique;
+    const getUniqueSlots = IntentUtteranceParser._getUniqueSlotsMap;
 
     if (_.isArray(lineMatches)) {
       for (const lineMatch of lineMatches) {
@@ -49,11 +49,6 @@ function IntentUtteranceParser(fileStream, callback) {
 
     for (var intent in intentsHash) {
       response.push(intentsHash[intent]);
-    }
-
-    function getUniqueSlots(obj) {
-      obj.slots = getUnique(obj.slots, 'name');
-      return obj;
     }
 
     const filteredResponse = _.chain(response).map(getUniqueSlots).value();
@@ -176,11 +171,25 @@ IntentUtteranceParser._getUnique = function(array, options) {
   return _.unique(array, options);
 };
 
-
+/**
+ * getUniqueWords
+ * @param {array} col - IntentUtteranceParser response array
+ */
 IntentUtteranceParser.getUniqueWords = function(col) {
   return _.chain(col).reduce(function(acc, obj) {
     return acc.concat(obj.utterances);
   }, []).flatten().unique().value();
+};
+
+/**
+ * getUniqueSlotsMap
+ * @param {object} obj - object containing slots array
+ */
+IntentUtteranceParser._getUniqueSlotsMap = function(obj) {
+  const getUnique = IntentUtteranceParser._getUnique;
+
+  obj.slots = getUnique(obj.slots, 'name');
+  return obj;
 };
 
 module.exports = IntentUtteranceParser;
