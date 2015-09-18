@@ -1,6 +1,6 @@
 {
   "name": "intent-utterance-file-parser",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Parse an intent utterance file, like the Alexa Skills Kit Sample Utterance file.",
   "main": "intent-utterance-file-parser.js",
   "directories": {

@@ -17,6 +17,9 @@ function IntentUtteranceParser(fileStream, callback) {
     const lineContentRegex = /[^\n\r]+/gi;
     const lineMatches = data.match(lineContentRegex);
     const intentsHash = {};
+    const getWords = IntentUtteranceParser._getWords;
+    const getSlots = IntentUtteranceParser._getSlots;
+    const getUnique = IntentUtteranceParser._getUnique;
 
     if (_.isArray(lineMatches)) {
       for (const lineMatch of lineMatches) {
@@ -30,21 +33,14 @@ function IntentUtteranceParser(fileStream, callback) {
               intentsHash[intentName] = {
                 intent: null,
                 slots: [],
-                words: []
+                utterances: []
               };
             }
 
             intentsHash[intentName].intent = intentName;
-            intentsHash[intentName].words = IntentUtteranceParser._getUnique(
-                  intentsHash[intentName].words.concat(
-                    IntentUtteranceParser._getWords(tokens)
-                  )
-            ).sort();
-
-            intentsHash[intentName].slots = IntentUtteranceParser._getUnique(
-                intentsHash[intentName].slots.concat(
-                    IntentUtteranceParser._getSlots(tokens)
-                ), 'name');
+            intentsHash[intentName].utterances.push(getWords(tokens));
+            intentsHash[intentName].slots = intentsHash[intentName].slots.concat(
+                    getSlots(tokens));
           }
 
         }
@@ -55,7 +51,14 @@ function IntentUtteranceParser(fileStream, callback) {
       response.push(intentsHash[intent]);
     }
 
-    callback(error, response);
+    function getUniqueSlots(obj) {
+      obj.slots = getUnique(obj.slots, 'name');
+      return obj;
+    }
+
+    const filteredResponse = _.chain(response).map(getUniqueSlots).value();
+
+    callback(error, filteredResponse);
   }).on('error', function(error) {
     callback(error);
   });
@@ -66,38 +69,58 @@ function IntentUtteranceParser(fileStream, callback) {
  * @param {array} words - array of words
  */
 IntentUtteranceParser._getSlots = function(words) {
+  const getSlotName = IntentUtteranceParser._getSlotName;
+  const isNotEmpty = IntentUtteranceParser._isNotEmpty;
+
   if (!_.isArray(words)) {
     return [];
   }
 
-  function slotName(word) {
-    if (!_.isString(word)) {
-      return null;
-    }
+  function getSlotObject(word) {
+    const slotName = getSlotName(word);
 
-    const slotName = /^\{.*\|\s*(\w+)\s*\}$/i;
-    const matches = word.match(slotName);
-
-    if (_.isArray(matches) && matches[1]) {
+    if (_.isString(slotName)) {
       return {
-        name: matches[1],
+        name: slotName,
         type: 'LITERAL'
       };
     }
-
     return null;
   }
 
-  function isWithinBraces(word) {
-    const withinBraces = /^\{.*\}$/gi;
-    return withinBraces.test(word);
+  return _.chain(words).map(getSlotObject).filter(isNotEmpty).value();
+};
+
+/**
+ * getSlotName
+ * @param {string} word - word
+ */
+IntentUtteranceParser._getSlotName = function(word) {
+  if (!_.isString(word)) {
+    return null;
   }
 
-  function notEmpty(word) {
-    return !_.isEmpty(word);
+  const slotName = /^\{.*\|\s*(\w+)\s*\}$/i;
+  const matches = word.match(slotName);
+
+  if (_.isArray(matches) && matches[1]) {
+    return matches[1];
   }
 
-  return _.chain(words).map(slotName).filter(notEmpty).value();
+  return null;
+};
+
+/**
+ * isWithinBraces
+ * @param {string} word - word
+ */
+IntentUtteranceParser._isWithinBraces = function(word) {
+  const withinBraces = /^\{.*\}$/gi;
+  return withinBraces.test(word);
+};
+
+IntentUtteranceParser._notEmpty = function(word) {
+  return !_.isEmpty(word);
 };
 
 /**
@@ -105,14 +128,44 @@ IntentUtteranceParser._getSlots = function(words) {
  * @param {array} words - array of words
  */
 IntentUtteranceParser._getWords = function(words) {
+  const getWordsFromSlot = IntentUtteranceParser._getWordsFromSlot;
+  const isWord = IntentUtteranceParser._isWord;
+
   if (!_.isArray(words)) {
     return [];
   }
 
-  return _.filter(words, function(word) {
-    const wordOnly = /^\w+$/gi;
-    return wordOnly.test(word);
-  });
+  return _.chain(words).reduce(getWordsFromSlot, words).filter(isWord).value();
+};
+
+/**
+ * isWord
+ * @param {string} word - word
+ */
+IntentUtteranceParser._isWord = function(word) {
+  const wordOnlyRegex = /^\w+$/gi;
+  return wordOnlyRegex.test(word);
+};
+
+/**
+ * getWordsFromSlot
+ * @desc reducer
+ * @param {array} acc - accumulator
+ * @param {string} word - word
+ */
+IntentUtteranceParser._getWordsFromSlot = function(acc, word) {
+  const wordsOnlyRegex = /[^\s^]+[^\s+]/gi;
+  const wordStringFromSlotRegex = /^\{(.*)\|.*\}$/i;
+  const slotWordsMatch = word.match(wordStringFromSlotRegex);
+
+  if (_.isArray(slotWordsMatch) && slotWordsMatch[1]) {
+    const slotWords = slotWordsMatch[1].match(wordsOnlyRegex);
+    if (_.isArray(slotWords)) {
+      acc = acc.concat(slotWords);
+    }
+  }
+
+  return acc;
 };
 
 /**
@@ -121,6 +174,13 @@ IntentUtteranceParser._getWords = function(words) {
  */
 IntentUtteranceParser._getUnique = function(array, options) {
   return _.unique(array, options);
+};
+
+
+IntentUtteranceParser.getUniqueWords = function(col) {
+  return _.chain(col).reduce(function(acc, obj) {
+    return acc.concat(obj.utterances);
+  }, []).flatten().unique().value();
 };
 
 module.exports = IntentUtteranceParser;

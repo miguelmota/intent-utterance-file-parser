@@ -2,7 +2,7 @@
 
 > Parse an intent utterance file, like the [Alexa Skills Kit Sample Utterance file](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface).
 
-The parser extracts unique words and slots from each intent.
+The parser extracts words and slots from each intent.
 
 # Install
 
@@ -40,48 +40,97 @@ IntentUtteranceParser(fileStream, function(error, response) {
 
   console.log(response);
   /*
-  [
-    {
-      "intent": "GetHoroscope",
+    [
+      {
+        "intent": "GetHoroscope",
         "slots": [
-        {
-          "name": "Sign",
-          "type": "LITERAL"
-        },
-        {
-          "name": "Date",
-          "type": "LITERAL"
-        }
+          {
+            "name": "Sign",
+            "type": "LITERAL"
+          },
+          {
+            "name": "Date",
+            "type": "LITERAL"
+          }
         ],
-          "words": [
-          "be",
-          "for",
-          "get",
-          "horoscope",
-          "is",
-          "me",
-          "my",
-          "the",
-          "what",
-          "will"
+        "utterances": [
+          [
+            "what",
+            "is",
+            "the",
+            "horoscope",
+            "for",
+            "pisces"
+          ],
+          [
+            "what",
+            "will",
+            "the",
+            "horoscope",
+            "for",
+            "be",
+            "leo",
+            "next",
+            "tuesday"
+          ],
+          [
+            "get",
+            "me",
+            "my",
+            "horoscope"
+          ],
+          [
+            "gemini"
           ]
-    },
-    {
-      "intent": "GetLuckyNumbers",
-      "slots": [],
-      "words": [
-      "are",
-      "lucky",
-      "me",
-      "my",
-      "numbers",
-      "tell",
-      "what"
-      ]
-    }
-  ]
+        ]
+      },
+      {
+        "intent": "GetLuckyNumbers",
+        "slots": [],
+        "utterances": [
+          [
+            "what",
+            "are",
+            "my",
+            "lucky",
+            "numbers"
+          ],
+          [
+            "tell",
+            "me",
+            "my",
+            "lucky",
+            "numbers"
+          ]
+        ]
+      }
+    ]
   */
 
+  console.log(IntentUtteranceParser.getUniqueWords(response));
+  /*
+    [
+      "what",
+      "is",
+      "the",
+      "horoscope",
+      "for",
+      "pisces",
+      "will",
+      "be",
+      "leo",
+      "next",
+      "tuesday",
+      "get",
+      "me",
+      "my",
+      "gemini",
+      "are",
+      "lucky",
+      "numbers",
+      "tell"
+    ]
+  */
 });
 ```
 
