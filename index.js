@@ -65,7 +65,6 @@ function IntentUtteranceParser(fileStream, callback) {
  */
 IntentUtteranceParser._getSlots = function(words) {
   const getSlotName = IntentUtteranceParser._getSlotName;
-  const isNotEmpty = IntentUtteranceParser._isNotEmpty;
 
   if (!_.isArray(words)) {
     return [];
@@ -83,7 +82,7 @@ IntentUtteranceParser._getSlots = function(words) {
     return null;
   }
 
-  return _.chain(words).map(getSlotObject).filter(isNotEmpty).value();
+  return _.chain(words).map(getSlotObject).filter(_.negate(_.isEmpty)).value();
 };
 
 /**
@@ -95,11 +94,12 @@ IntentUtteranceParser._getSlotName = function(word) {
     return null;
   }
 
+  const stripNonAlphaNum = IntentUtteranceParser._stripNonAlphaNum;
   const slotName = /^\{.*\|\s*(\w+)\s*\}$/i;
   const matches = word.match(slotName);
 
   if (_.isArray(matches) && matches[1]) {
-    return matches[1];
+    return stripNonAlphaNum(matches[1]);
   }
 
   return null;
@@ -114,10 +114,6 @@ IntentUtteranceParser._isWithinBraces = function(word) {
   return withinBraces.test(word);
 };
 
-IntentUtteranceParser._notEmpty = function(word) {
-  return !_.isEmpty(word);
-};
-
 /**
  * getWords
  * @param {array} words - array of words
@@ -125,12 +121,26 @@ IntentUtteranceParser._notEmpty = function(word) {
 IntentUtteranceParser._getWords = function(words) {
   const getWordsFromSlot = IntentUtteranceParser._getWordsFromSlot;
   const isWord = IntentUtteranceParser._isWord;
+  const stripNonAlphaNum = IntentUtteranceParser._stripNonAlphaNum;
+  const isWithinBraces = IntentUtteranceParser._isWithinBraces;
 
   if (!_.isArray(words)) {
     return [];
   }
 
-  return _.chain(words).reduce(getWordsFromSlot, words).filter(isWord).value();
+  return _.chain(words).reduce(getWordsFromSlot, words).filter(_.negate(isWithinBraces)).map(stripNonAlphaNum).filter(isWord).value();
+};
+
+/**
+ * stripSpecialChars
+ * @param {string} word - word
+ */
+IntentUtteranceParser._stripNonAlphaNum = function(word) {
+  if (!_.isString(word)) {
+    return '';
+  }
+
+  return word.replace(/[^0-9a-zA-Z-]/g, '');
 };
 
 /**
@@ -172,16 +182,6 @@ IntentUtteranceParser._getUnique = function(array, options) {
 };
 
 /**
- * getUniqueWords
- * @param {array} col - IntentUtteranceParser response array
- */
-IntentUtteranceParser.getUniqueWords = function(col) {
-  return _.chain(col).reduce(function(acc, obj) {
-    return acc.concat(obj.utterances);
-  }, []).flatten().unique().value();
-};
-
-/**
  * getUniqueSlotsMap
  * @param {object} obj - object containing slots array
  */
@@ -190,6 +190,16 @@ IntentUtteranceParser._getUniqueSlotsMap = function(obj) {
 
   obj.slots = getUnique(obj.slots, 'name');
   return obj;
+};
+
+/**
+ * getUniqueWords
+ * @param {array} col - IntentUtteranceParser response array
+ */
+IntentUtteranceParser.getUniqueWords = function(col) {
+  return _.chain(col).reduce(function(acc, obj) {
+    return acc.concat(obj.utterances);
+  }, []).flatten().unique().value();
 };
 
 module.exports = IntentUtteranceParser;
